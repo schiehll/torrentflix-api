@@ -1,0 +1,16 @@
+{
+  "parser": "babel-eslint",
+  "rules": {
+    "no-unused-vars": [
+      "error",
+      {
+        "vars": "all",
+        "args": "none",
+        "ignoreRestSiblings": true
+      }
+    ],
+    "no-else-return": "error",
+    "no-unreachable": "error",
+    "prefer-const": "error"
+  }
+}

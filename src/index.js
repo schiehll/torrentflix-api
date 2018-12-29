@@ -1,47 +1,67 @@
-const WebTorrent = require("webtorrent");
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const networkAddress = require("network-address");
+import WebTorrent from 'webtorrent'
+import express from 'express'
+import cors from 'cors'
+import bodyParser from 'body-parser'
+import networkAddress from 'network-address'
+import isVideo from 'is-video'
 
-const app = express();
+const app = express()
+let server = null
+let client = null
 
-app.use(cors());
-app.use(bodyParser.json());
-app.get("/torrent", (req, res) => {
-  const torrentId =
-    "magnet:?xt=urn:btih:4bac3b4d4d4ac463ca50d427973e84db0b91be26&dn=Brooklyn.Nine-Nine.S05E01.PROPER.720p.HDTV.x264-BATV%5Beztv%5D.mkv%5Beztv%5D&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A80&tr=udp%3A%2F%2Fglotorrents.pw%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Fexodus.desync.com%3A6969"; //req.body.torrentId;
+app.use(cors())
+app.use(bodyParser.json())
 
-  const client = new WebTorrent();
-  const torrent = client.add(torrentId);
+app.post('/start', (req, res) => {
+  const torrentId = req.body.torrentId
 
-  const server = torrent.createServer();
+  client = new WebTorrent()
+  const torrent = client.add(torrentId)
+
+  server = torrent.createServer()
 
   function initServer(port) {
-    torrent.once("ready", () => {
-      const index = 0;
-      const url = `http://${networkAddress()}:${port}/${index}/${
-        torrent.infoHash
-      }/${encodeURIComponent(torrent.files[index].name)}`;
+    torrent.once('ready', () => {
+      const biggestVideoFile = torrent.files
+        .filter(file => isVideo(file.name))
+        .sort((a, b) => b.length - a.length)[0]
 
-      res.send(JSON.stringify({ url }));
-    });
+      if (!biggestVideoFile) {
+        res.json({ error: 'NO_VIDEO_FILE' })
+      } else {
+        const index = torrent.files.findIndex(
+          file => file.name === biggestVideoFile.name
+        )
+        const url = `http://${networkAddress()}:${port}/${index}/${
+          torrent.infoHash
+        }/${encodeURIComponent(torrent.files[index].name)}`
+
+        res.json({ url })
+      }
+    })
   }
 
   server
     .listen(3001, () => {
-      initServer(server.address().port);
+      initServer(server.address().port)
     })
-    .on("error", err => {
-      if (err.code === "EADDRINUSE" || err.code === "EACCES") {
-        // If port is taken, pick one a free one automatically
+    .on('error', err => {
+      if (err.code === 'EADDRINUSE' || err.code === 'EACCES') {
+        // If port is taken, pick a free one automatically
         return server.listen(0, () => {
-          initServer(server.address().port);
-        });
+          initServer(server.address().port)
+        })
       }
-    });
-});
+    })
+})
+
+app.get('/finish', (req, res) => {
+  if (server) server.close()
+  if (client) client.destroy()
+
+  res.sendStatus(200)
+})
 
 app.listen(3000, () => {
-  console.log(`Server is up in port ${3000}`);
-});
+  console.log(`Server is up in port ${3000}`)
+})
