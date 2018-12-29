@@ -4,6 +4,7 @@ import cors from 'cors'
 import bodyParser from 'body-parser'
 import networkAddress from 'network-address'
 import isVideo from 'is-video'
+import api from './api'
 
 const app = express()
 let server = null
@@ -11,6 +12,8 @@ let client = null
 
 app.use(cors())
 app.use(bodyParser.json())
+
+app.use(api)
 
 app.post('/start', (req, res) => {
   const torrentId = req.body.torrentId
