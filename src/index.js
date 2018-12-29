@@ -10,10 +10,7 @@ const app = express()
 let server = null
 let client = null
 
-app.use(cors())
-app.use(bodyParser.json())
-
-app.use(api)
+app.use(cors(), bodyParser.json(), api)
 
 app.post('/start', (req, res) => {
   const torrentId = req.body.torrentId
