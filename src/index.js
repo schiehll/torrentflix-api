@@ -13,43 +13,55 @@ let client = null
 app.use(cors(), bodyParser.json(), api)
 
 app.post('/start', (req, res) => {
+  if (server) server.close()
+  if (client) client.destroy()
+
   const torrentId = req.body.torrentId
 
   client = new WebTorrent()
   const torrent = client.add(torrentId)
 
   server = torrent.createServer()
+  let port = 3001
 
-  function initServer(port) {
-    torrent.once('ready', () => {
-      const biggestVideoFile = torrent.files
-        .filter(file => isVideo(file.name))
-        .sort((a, b) => b.length - a.length)[0]
+  function onReady() {
+    const biggestVideoFile = torrent.files
+      .filter(file => isVideo(file.name))
+      .sort((a, b) => b.length - a.length)[0]
 
-      if (!biggestVideoFile) {
-        res.json({ error: 'NO_VIDEO_FILE' })
-      } else {
-        const index = torrent.files.findIndex(
-          file => file.name === biggestVideoFile.name
-        )
-        const url = `http://${networkAddress()}:${port}/${index}/${
-          torrent.infoHash
-        }/${encodeURIComponent(torrent.files[index].name)}`
+    if (!biggestVideoFile) {
+      res.json({ error: 'NO_VIDEO_FILE' })
+    } else {
+      const index = torrent.files.findIndex(
+        file => file.name === biggestVideoFile.name
+      )
+      const url = `http://${networkAddress()}:${port}/${index}/${
+        torrent.infoHash
+      }/${encodeURIComponent(torrent.files[index].name)}`
 
-        res.json({ url })
-      }
-    })
+      res.json({ url })
+    }
+  }
+
+  function initServer() {
+    if (torrent.ready) {
+      onReady()
+    } else {
+      torrent.once('ready', onReady)
+    }
   }
 
   server
     .listen(3001, () => {
-      initServer(server.address().port)
+      port = server.address().port
+      initServer()
     })
     .on('error', err => {
       if (err.code === 'EADDRINUSE' || err.code === 'EACCES') {
         // If port is taken, pick a free one automatically
-        return server.listen(0, () => {
-          initServer(server.address().port)
+        server.listen(0, () => {
+          port = server.address().port
+          initServer()
         })
       }
     })
