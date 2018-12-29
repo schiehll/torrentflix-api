@@ -41,31 +41,44 @@ export default {
           throw new Error('TORRENT_NOT_FOUND')
         }
 
+        const seasons = data.episodes.reduce((seasons, episode) => {
+          return {
+            ...seasons,
+            [episode.season]: (seasons[episode.season] || []).concat(episode)
+          }
+        }, {})
+
         return {
           title: data.title,
           synopsis: data.synopsis,
           year: data.year,
           poster: data.images.banner,
-          episodes: data.episodes.map(episode => ({
-            id: episode.episode,
-            season: episode.season,
-            title: episode.title,
-            overview: episode.overview,
-            date: episode.first_aired,
-            torrents: Object.keys(episode.torrents)
-              .map(key => {
-                const torrent = episode.torrents[key]
+          seasons: Object.keys(seasons).map(season => {
+            const episodes = seasons[season]
 
-                return {
-                  url: torrent.url,
-                  seeds: torrent.seeds,
-                  peers: torrent.peers,
-                  provider: torrent.provider,
-                  quality: key === '0' ? 'SD' : key
-                }
-              })
-              .filter(torrent => torrent.url !== null)
-          })),
+            return {
+              number: season,
+              episodes: episodes.map(episode => ({
+                number: episode.episode,
+                title: episode.title,
+                overview: episode.overview,
+                date: episode.first_aired,
+                torrents: Object.keys(episode.torrents)
+                  .map(key => {
+                    const torrent = episode.torrents[key]
+
+                    return {
+                      url: torrent.url,
+                      seeds: torrent.seeds,
+                      peers: torrent.peers,
+                      provider: torrent.provider,
+                      quality: key === '0' ? 'SD' : key
+                    }
+                  })
+                  .filter(torrent => torrent.url !== null)
+              }))
+            }
+          }),
           type: 'SHOW'
         }
       } catch (error) {

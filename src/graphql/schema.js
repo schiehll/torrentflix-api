@@ -12,10 +12,14 @@ export default `
     provider: String
   }
 
+  type Season {
+    number: String!
+    episodes: [Episode]
+  }
+
   type Episode {
-    id: ID!
+    number: String
     title: String!
-    season: String!
     overview: String
     date: Int
     torrents: [Torrent]
@@ -28,24 +32,16 @@ export default `
     type: TorrentType!
   }
 
-  interface TorrentInfo {
+  type ShowInfoPayload {
     title: String!
     poster: String
     synopsis: String
     year: String
     type: TorrentType!
+    seasons: [Season]
   }
 
-  type ShowInfoPayload implements TorrentInfo {
-    title: String!
-    poster: String
-    synopsis: String
-    year: String
-    type: TorrentType!
-    episodes: [Episode]
-  }
-
-  type MovieInfoPayload implements TorrentInfo {
+  type MovieInfoPayload {
     title: String!
     poster: String
     synopsis: String
