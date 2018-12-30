@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import isImage from 'is-image'
 
 const OMDB_API_URL = `https://www.omdbapi.com?apikey=${
   process.env.OMDB_API_KEY
@@ -21,8 +22,9 @@ export default {
         return {
           imdbID: data.imdbID,
           title: data.Title,
-          poster: data.Poster,
-          type: data.Type === 'movie' ? 'MOVIE' : 'SHOW'
+          poster: isImage(data.Poster) ? data.Poster : '',
+          type: data.Type === 'movie' ? 'MOVIE' : 'SHOW',
+          year: data.Year
         }
       } catch (error) {
         const err = error.message || error
@@ -52,7 +54,7 @@ export default {
           title: data.title,
           synopsis: data.synopsis,
           year: data.year,
-          poster: data.images.banner,
+          poster: isImage(data.images.banner) ? data.images.banner : '',
           seasons: Object.keys(seasons).map(season => {
             const episodes = seasons[season]
 
@@ -104,7 +106,7 @@ export default {
           title: data.title,
           synopsis: data.synopsis,
           year: data.year,
-          poster: data.images.banner,
+          poster: isImage(data.images.banner) ? data.images.banner : '',
           torrents: (enTorrents
             ? Object.keys(enTorrents).map(key => {
                 const torrent = enTorrents[key]

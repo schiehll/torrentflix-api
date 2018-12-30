@@ -30,6 +30,7 @@ export default `
     title: String!
     poster: String
     type: TorrentType!
+    year: String
   }
 
   type ShowInfoPayload {
