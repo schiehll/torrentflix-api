@@ -13,9 +13,6 @@ let client = null
 app.use(cors(), bodyParser.json(), api)
 
 app.post('/start', (req, res) => {
-  if (server) server.close()
-  if (client) client.destroy()
-
   const torrentId = req.body.torrentId
 
   client = new WebTorrent()
